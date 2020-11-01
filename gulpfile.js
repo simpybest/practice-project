@@ -1,16 +1,40 @@
-const gulp = require('gulp');
+const {src, dest, watch} = require('gulp');
 const browserSync = require('browser-sync').create();
-const minifycss = require('gulp-minify-css');
 
-gulp.task('browser-sync', function() {
+const sass = require('gulp-sass');
+const minCss = require('gulp-cssmin');
+const rename = require('gulp-rename');
+// require "name" located in pachage.json
+
+// server
+function bs() {
+    serveSass();
+    serveMinCss();
     browserSync.init({
-        proxy: "yourlocal.dev"
+        server: {
+            baseDir: "src/"
+        }
     });
-    gulp.watch("./*.html").on('change', browserSync.reload);
-});
+    watch("src/*.html").on('change', browserSync.reload);
+    watch("src/sass/*.sass", serveSass);
+    watch("src/css/*.css", serveMinCss);
+};
 
-gulp.task('css', function() {
-    return gulp.src('src/css/*.css')
-      .pipe(minifycss())
-      .pipe(gulp.dest('dist/css'));
-    });
+// sass
+function serveSass () {
+    return src('src/sass/*.sass')
+        .pipe(sass())
+        .pipe(dest('src/css'))
+        .pipe(browserSync.stream());
+};
+
+// min-css
+function serveMinCss () {
+    return src('src/css/*.css')
+        .pipe(minCss())
+        .pipe(rename({suffix: '.min'}))
+        .pipe(dest('dist'));
+};
+
+exports.serve = bs;
+// enter "gulp serve"
